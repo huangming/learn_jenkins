@@ -135,6 +135,7 @@ ssh server: docker.sample.com
 Transfers: 
     Remote directory: /
         cd /home/vagrant/project/nginx-test
+        sudo docker rmi $(docker images -f "dangling=true" -q)
         sudo docker stop  $(sudo docker ps | grep mynginx-test:last |awk '{print  $1}'|sed 's/%//g')
         sudo docker rm $(sudo docker ps -a | grep mynginx-test:last |awk '{print  $1}'|sed 's/%//g')
         docker build -t mynginx-test:last .
