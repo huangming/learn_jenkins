@@ -6,6 +6,26 @@ pipeline {
         timeout(time:5, unit: 'MINUTES')
     }
     stages {
+        stage('checkout') { 
+            steps { 
+                script {
+                    def url = 'git@gitlab.sample.com:hming/nginx-test.git'
+                    def remote = [:]
+                    remote.name = 'docker'
+                    remote.host ='docker.sample.com'
+                    remote.user = 'vagrant'
+                    remote.password ='vagrant'
+                    remote.allowAnyHosts= true
+                    def checkoutcommandStr="""
+                      if [ ! -d "/home/vagrant/project/nginx-test" ]; then
+                        cd /home/vagrant/project
+                        git clone url
+                      fi
+                    """
+                    sshCommand remote: remote, command: checkoutcommandStr
+                }
+            }
+        }
         stage('Build') { 
             steps { 
                 script {
@@ -17,6 +37,7 @@ pipeline {
                     remote.allowAnyHosts= true
                     def commandStr = """
                       cd /home/vagrant/project/nginx-test
+                      git pull
                       docker images -f "dangling=true" -q | uniq | xargs -I {} docker rmi --force {}
                       docker ps | grep "mynginx-test:last" | awk '{print \$1}'|sed 's/%//g' | uniq | xargs -I {} docker stop {}
                       docker ps -a | grep "mynginx-test:last" |awk '{print \$1}'|sed 's/%//g' | uniq | xargs -I {} docker rm {}
