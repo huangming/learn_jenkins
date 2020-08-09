@@ -1,5 +1,10 @@
 pipeline { 
     agent any 
+    options {
+        buildDiscarder(logRotator(numToKeepStr:'10'))
+        disableConcurrentBuilds()
+        timeout(time:5, unit: 'MINUTES')
+    }
     stages {
         stage('Build') { 
             steps { 
@@ -13,12 +18,17 @@ pipeline {
                     def commandStr = """
                       cd /home/vagrant/project/nginx-test
                       docker images -f "dangling=true" -q | uniq | xargs -I {} docker rmi --force {}
-                      docker ps | grep "mynginx-test:last" | awk \'{print \$1}\'|sed \'s/%//g\' | uniq | xargs -I {} docker stop {}
-                      docker ps -a | grep "mynginx-test:last" |awk \'{print \$1}\'|sed \'s/%//g\' | uniq | xargs -I {} docker rm {}
+                      docker ps | grep "mynginx-test:last" | awk '{print \$1}'|sed 's/%//g' | uniq | xargs -I {} docker stop {}
+                      docker ps -a | grep "mynginx-test:last" |awk '{print \$1}'|sed 's/%//g' | uniq | xargs -I {} docker rm {}
                       docker build -t mynginx-test:last .
                       docker run -p 8080:80 -d mynginx-test:last
                     """
-                    sshCommand remote: remote, command: commandStr, sudo: true
+                    sshCommand remote: remote, command: commandStr
+                }
+            }
+            post {
+                always {
+                    echo "stage post always"
                 }
             }
         }
@@ -31,6 +41,17 @@ pipeline {
             steps {
                 sh 'echo Deploy'
             }
+        }
+    }
+    post {
+        changed {
+            echo "pipelinne post changed"
+        }
+        always {
+            echo "pipelinne post always"
+        }
+        success {
+            echo "pipelinne post success"
         }
     }
 }

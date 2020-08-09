@@ -12,6 +12,9 @@ my-nginx-alpine-v1.tar: 自建nginx镜像dogrich/my-nginx:v1
 * Jenkinsfile、Pipelinne
     [用 Jenkins 构建 CI/CD 流水线](https://linux.cn/article-11546-1.html)
 
+### 推荐入门书籍
+* [Jenkins 2.x 实践指南](https://book.douban.com/subject/33407581/)
+
 
 ### 实践效果
 ```
@@ -194,12 +197,12 @@ pipeline {
                     def commandStr = """
                       cd /home/vagrant/project/nginx-test
                       docker images -f "dangling=true" -q | uniq | xargs -I {} docker rmi --force {}
-                      docker ps | grep "mynginx-test:last" | awk \'{print \$1}\'|sed \'s/%//g\' | uniq | xargs -I {} docker stop {}
-                      docker ps -a | grep "mynginx-test:last" |awk \'{print \$1}\'|sed \'s/%//g\' | uniq | xargs -I {} docker rm {}
+                      docker ps | grep "mynginx-test:last" | awk '{print \$1}'|sed 's/%//g' | uniq | xargs -I {} docker stop {}
+                      docker ps -a | grep "mynginx-test:last" |awk '{print \$1}'|sed 's/%//g' | uniq | xargs -I {} docker rm {}
                       docker build -t mynginx-test:last .
                       docker run -p 8080:80 -d mynginx-test:last
                     """
-                    sshCommand remote: remote, command: commandStr, sudo: true
+                    sshCommand remote: remote, command: commandStre
                 }
             }
         }
@@ -216,7 +219,6 @@ pipeline {
     }
 }
 ```
-
 
 
 
