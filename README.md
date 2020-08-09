@@ -179,12 +179,51 @@ Transfers:
     `系统管理` -> `系统设置` -> `Enable authentication for '/project' end-point`
     
 ### 流水线 Pipeline    
-安装插件 `SSH Pipeline Steps`
+安装插件:
+* `SSH Pipeline Steps`
+* `ConditionalBuildStep`
+ 
 远程ssh(注意$、'等转义):
 ```
 pipeline { 
     agent any 
+    options {
+        buildDiscarder(logRotator(numToKeepStr:'10'))
+        disableConcurrentBuilds()
+        timeout(time:5, unit: 'MINUTES')
+    }
+    parameters {
+        choice(name: 'CHOICES', choices: 'dev\ntest\nproduct', description: '请选择部署的环境')
+    }
+    triggers {
+        // cron('30 16 * * *') // 定时任务
+        // pollSCM('H/1 * * * *') // 每分钟判断代码是否变化
+        gitlab(triggerOnPush: true, triggerOnMergeRequest: true, branchFilterType: 'All',
+        secretToken: "ec4a11ba90ef6cc3ae28a1ace6d28a00")
+    }
     stages {
+        stage('checkout') { 
+            steps { 
+                script {
+                    def url = 'git@gitlab.sample.com:hming/nginx-test.git'
+                    def remote = [:]
+                    remote.name = 'docker'
+                    remote.host ='docker.sample.com'
+                    remote.user = 'vagrant'
+                    remote.password ='vagrant'
+                    remote.allowAnyHosts= true
+                    def checkoutcommandStr="""
+                      if [ ! -d "/home/vagrant/project/nginx-test" ]; then
+                        cd /home/vagrant/project
+                        git clone ${url}
+                      fi
+                      cd /home/vagrant/project/nginx-test
+                      git pull
+                    """
+                    sshCommand remote: remote, command: checkoutcommandStr
+                }
+            }
+        }
         stage('Build') { 
             steps { 
                 script {
@@ -202,7 +241,12 @@ pipeline {
                       docker build -t mynginx-test:last .
                       docker run -p 8080:80 -d mynginx-test:last
                     """
-                    sshCommand remote: remote, command: commandStre
+                    sshCommand remote: remote, command: commandStr
+                }
+            }
+            post {
+                always {
+                    echo "stage post always"
                 }
             }
         }
@@ -211,10 +255,32 @@ pipeline {
                 sh 'echo Test'
             }
         }
-        stage('Deploy') {
-            steps {
-                sh 'echo Deploy'
+        stage('Deploy to test') {
+            when {
+                expression { return params.CHOICES == 'test' }
             }
+            steps {
+                echo "Deploy to test"
+            }
+        }
+        stage('Deploy to prod') {
+            when {
+                expression { return params.CHOICES == 'product' }
+            }
+            steps {
+                echo "Deploy to prod"
+            }
+        }
+    }
+    post {
+        changed {
+            echo "pipelinne post changed"
+        }
+        always {
+            echo "pipelinne post always"
+        }
+        success {
+            echo "pipelinne post success"
         }
     }
 }

@@ -5,6 +5,9 @@ pipeline {
         disableConcurrentBuilds()
         timeout(time:5, unit: 'MINUTES')
     }
+    parameters {
+        choice(name: 'CHOICES', choices: 'dev\ntest\nproduct', description: '请选择部署的环境')
+    }
     triggers {
         // cron('30 16 * * *') // 定时任务
         // pollSCM('H/1 * * * *') // 每分钟判断代码是否变化
@@ -67,7 +70,7 @@ pipeline {
         }
         stage('Deploy to test') {
             when {
-                branch 'master'
+                expression { return params.CHOICES == 'test' }
             }
             steps {
                 echo "Deploy to test"
@@ -75,7 +78,7 @@ pipeline {
         }
         stage('Deploy to prod') {
             when {
-                branch 'release'
+                expression { return params.CHOICES == 'product' }
             }
             steps {
                 echo "Deploy to prod"
