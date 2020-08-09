@@ -5,6 +5,12 @@ pipeline {
         disableConcurrentBuilds()
         timeout(time:5, unit: 'MINUTES')
     }
+    triggers {
+        // cron('30 16 * * *') // 定时任务
+        // pollSCM('H/1 * * * *') // 每分钟判断代码是否变化
+        gitlab(triggerOnPush: true, triggerOnMergeRequest: true, branchFilterType: 'All',
+        secretToken: "ec4a11ba90ef6cc3ae28a1ace6d28a00")
+    }
     stages {
         stage('checkout') { 
             steps { 
@@ -19,8 +25,10 @@ pipeline {
                     def checkoutcommandStr="""
                       if [ ! -d "/home/vagrant/project/nginx-test" ]; then
                         cd /home/vagrant/project
-                        git clone url
+                        git clone ${url}
                       fi
+                      cd /home/vagrant/project/nginx-test
+                      git pull
                     """
                     sshCommand remote: remote, command: checkoutcommandStr
                 }
@@ -37,7 +45,6 @@ pipeline {
                     remote.allowAnyHosts= true
                     def commandStr = """
                       cd /home/vagrant/project/nginx-test
-                      git pull
                       docker images -f "dangling=true" -q | uniq | xargs -I {} docker rmi --force {}
                       docker ps | grep "mynginx-test:last" | awk '{print \$1}'|sed 's/%//g' | uniq | xargs -I {} docker stop {}
                       docker ps -a | grep "mynginx-test:last" |awk '{print \$1}'|sed 's/%//g' | uniq | xargs -I {} docker rm {}
