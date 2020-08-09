@@ -209,9 +209,11 @@ pipeline {
                     def remote = [:]
                     remote.name = 'docker'
                     remote.host ='docker.sample.com'
-                    remote.user = 'vagrant'
-                    remote.password ='vagrant'
                     remote.allowAnyHosts= true
+  	                withCredentials([usernamePassword(credentialsId: 'docker_ssh', passwordVariable: 'password', usernameVariable: 'username')]) {
+   	                	remote.user = "${username}"
+   	                	remote.password = "${password}"
+  	                }
                     def checkoutcommandStr="""
                       if [ ! -d "/home/vagrant/project/nginx-test" ]; then
                         cd /home/vagrant/project
@@ -230,9 +232,11 @@ pipeline {
                     def remote = [:]
                     remote.name = 'docker'
                     remote.host ='docker.sample.com'
-                    remote.user = 'vagrant'
-                    remote.password ='vagrant'
                     remote.allowAnyHosts= true
+  	                withCredentials([usernamePassword(credentialsId: 'docker_ssh', passwordVariable: 'password', usernameVariable: 'username')]) {
+   	                	remote.user = "${username}"
+   	                	remote.password = "${password}"
+  	                }
                     def commandStr = """
                       cd /home/vagrant/project/nginx-test
                       docker images -f "dangling=true" -q | uniq | xargs -I {} docker rmi --force {}
@@ -301,7 +305,6 @@ pipeline {
     }
 }
 ```
-
 
 
 
