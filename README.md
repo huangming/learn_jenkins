@@ -178,6 +178,11 @@ Transfers:
     * 去掉`Gitlab enable authentication` 点选 放开
     `系统管理` -> `系统设置` -> `Enable authentication for '/project' end-point`
     
+5. 插件Email-ext开启debug模式后发送邮件报错`MessagingException message: failed to connect, no password specified?`
+Extended E-mail Notification 2.7.3 版本本身问题，需替换成2.7.2版本
+从这里下载，手动上传安装 http://updates.jenkins-ci.org/download/plugins/
+
+
 ### 流水线 Pipeline    
 安装插件:
 * `SSH Pipeline Steps`
@@ -259,22 +264,22 @@ pipeline {
                 sh 'echo Test'
             }
         }
-        stage('PreTest'){
-            steps {
-                script {
-                    approvalMap = input(
-                        message: '准备发布到哪个环境？',
-                        ok: '确定',
-                        parameters: [
-                            choice(choices: 'dev\ntest\nproduct', description: '发布到什么环境?', name: 'ENV'),
-                            string(defaultValue: '', description: '', name: 'myparam')
-                        ],
-                        submitter: 'admin,hming,root',
-                        submitterParameter: 'APPROVER'
-                    )
-                }
-            }
-        }
+        // stage('PreTest'){
+        //     steps {
+        //         script {
+        //             approvalMap = input(
+        //                 message: '准备发布到哪个环境？',
+        //                 ok: '确定',
+        //                 parameters: [
+        //                     choice(choices: 'dev\ntest\nproduct', description: '发布到什么环境?', name: 'ENV'),
+        //                     string(defaultValue: '', description: '', name: 'myparam')
+        //                 ],
+        //                 submitter: 'admin,hming,root',
+        //                 submitterParameter: 'APPROVER'
+        //             )
+        //         }
+        //     }
+        // }
         stage('Deploy to test') {
             when {
                 expression { return params.CHOICES == 'test' }
@@ -283,14 +288,14 @@ pipeline {
                 echo "Deploy to test"
             }
         }
-        stage('Deploy to prod') {
-            steps {
-                echo "Deploy to prod"
-                echo "操作者是 ${approvalMap['APPROVER']}"
-                echo "发布到什么环境？ ${approvalMap['ENV']}"
-                echo "自定义参数: ${approvalMap['myparam']}"
-            }
-        }
+        // stage('Deploy to prod') {
+        //     steps {
+        //         echo "Deploy to prod"
+        //         echo "操作者是 ${approvalMap['APPROVER']}"
+        //         echo "发布到什么环境？ ${approvalMap['ENV']}"
+        //         echo "自定义参数: ${approvalMap['myparam']}"
+        //     }
+        // }
     }
     post {
         changed {
@@ -301,10 +306,18 @@ pipeline {
         }
         success {
             echo "pipelinne post success"
+            emailext(
+              subject: "项目${env.JOB_NAME}分支${GIT_BRANCH}构建成功",
+              body: '${DEFAULT_CONTENT}',
+              from: "username@163.com",
+              to: "username@qq.com",
+            )
         }
     }
 }
 ```
 
-
+### 通知
+Email Extension插件
+配置：系统管理-系统配置-Email Extension Notification
 

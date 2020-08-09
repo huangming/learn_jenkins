@@ -72,22 +72,22 @@ pipeline {
                 sh 'echo Test'
             }
         }
-        stage('PreTest'){
-            steps {
-                script {
-                    approvalMap = input(
-                        message: '准备发布到哪个环境？',
-                        ok: '确定',
-                        parameters: [
-                            choice(choices: 'dev\ntest\nproduct', description: '发布到什么环境?', name: 'ENV'),
-                            string(defaultValue: '', description: '', name: 'myparam')
-                        ],
-                        submitter: 'admin,hming,root',
-                        submitterParameter: 'APPROVER'
-                    )
-                }
-            }
-        }
+        // stage('PreTest'){
+        //     steps {
+        //         script {
+        //             approvalMap = input(
+        //                 message: '准备发布到哪个环境？',
+        //                 ok: '确定',
+        //                 parameters: [
+        //                     choice(choices: 'dev\ntest\nproduct', description: '发布到什么环境?', name: 'ENV'),
+        //                     string(defaultValue: '', description: '', name: 'myparam')
+        //                 ],
+        //                 submitter: 'admin,hming,root',
+        //                 submitterParameter: 'APPROVER'
+        //             )
+        //         }
+        //     }
+        // }
         stage('Deploy to test') {
             when {
                 expression { return params.CHOICES == 'test' }
@@ -96,14 +96,14 @@ pipeline {
                 echo "Deploy to test"
             }
         }
-        stage('Deploy to prod') {
-            steps {
-                echo "Deploy to prod"
-                echo "操作者是 ${approvalMap['APPROVER']}"
-                echo "发布到什么环境？ ${approvalMap['ENV']}"
-                echo "自定义参数: ${approvalMap['myparam']}"
-            }
-        }
+        // stage('Deploy to prod') {
+        //     steps {
+        //         echo "Deploy to prod"
+        //         echo "操作者是 ${approvalMap['APPROVER']}"
+        //         echo "发布到什么环境？ ${approvalMap['ENV']}"
+        //         echo "自定义参数: ${approvalMap['myparam']}"
+        //     }
+        // }
     }
     post {
         changed {
@@ -114,6 +114,12 @@ pipeline {
         }
         success {
             echo "pipelinne post success"
+            emailext(
+              subject: "项目${env.JOB_NAME}分支${GIT_BRANCH}构建成功",
+              body: '${DEFAULT_CONTENT}',
+              from: "username@163.com",
+              to: "username@qq.com",
+            )
         }
     }
 }
