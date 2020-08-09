@@ -65,9 +65,20 @@ pipeline {
                 sh 'echo Test'
             }
         }
-        stage('Deploy') {
+        stage('Deploy to test') {
+            when {
+                branch 'master'
+            }
             steps {
-                sh 'echo Deploy'
+                echo "Deploy to test"
+            }
+        }
+        stage('Deploy to prod') {
+            when {
+                branch 'release'
+            }
+            steps {
+                echo "Deploy to prod"
             }
         }
     }
